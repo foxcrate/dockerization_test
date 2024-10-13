@@ -1,38 +1,31 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { UserModule } from './user/user.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { SocketModule } from './socket/socket.module';
+import { RoomModule } from './room/room.module';
+import { AuthGuard } from './user/guards/auth.guard';
 
 @Module({
   imports: [
-    ClientsModule.register([
-      {
-        name: 'USER_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          port: 6379,
-          host: 'localhost',
-        },
+    ConfigModule.forRoot({ isGlobal: true }),
+    JwtModule.registerAsync({
+      useFactory: async (configService: ConfigService) => {
+        return {
+          secret: configService.getOrThrow('JWT_SECRET'),
+        };
       },
-      {
-        name: 'CHAT_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          port: 6379,
-          host: 'localhost',
-        },
-      },
-      {
-        name: 'NOTIFICATION_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          port: 6379,
-          host: 'localhost',
-        },
-      },
-    ]),
+      inject: [ConfigService],
+      global: true,
+    }),
+    UserModule,
+    SocketModule,
+    RoomModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthGuard],
+  exports: [AuthGuard],
 })
 export class AppModule {}
