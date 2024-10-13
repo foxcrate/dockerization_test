@@ -8,16 +8,12 @@ import {
 } from '@nestjs/microservices';
 import { io, Socket } from 'socket.io-client';
 import { createClient } from 'redis';
-import { ChatGateway } from './chat.gatway';
 
 @Controller()
 export class AppController {
   pubClient: ReturnType<typeof createClient>;
   subClient: ReturnType<typeof createClient>;
-  constructor(
-    private readonly appService: AppService,
-    private chatGateway: ChatGateway,
-  ) {}
+  constructor(private readonly appService: AppService) {}
   private socket: Socket;
   async onModuleInit() {
     // this.socket = io('http://localhost:3001/chat');
@@ -39,7 +35,7 @@ export class AppController {
 
   @MessagePattern({ cmd: 'get_chats' })
   getChats() {
-    console.log('I am chat microservice service 1');
+    // console.log('I am chat microservice service 1');
     return [
       { id: 1, message: 'one' },
       { id: 2, message: 'two' },
@@ -48,11 +44,11 @@ export class AppController {
 
   @MessagePattern({ cmd: 'send_chat_message' })
   sendMessage2(@Payload() data: any, @Ctx() context: RedisContext) {
-    console.log('I am chat microservice 1 controller');
-    console.log(data);
-    console.log('I am chat microservice 1 controller');
+    // console.log('I am chat microservice 1 controller');
+    // console.log(data);
+    // console.log('I am chat microservice 1 controller');
 
-    console.log('chat micro service: appController');
+    // console.log('chat micro service: appController');
 
     // Emit a message to the WebSocket server
     this.socket.emit('message', data.message);
@@ -68,9 +64,10 @@ export class AppController {
     return { success: true, message: 'Message broadcasted successfully' };
   }
 
-  @Get('send')
-  sendMessage() {
-    // Somewhere in your Chat service
-    this.chatGateway.sendMessageToNotification('A new chat message!');
+  @MessagePattern({ cmd: 'chat_service.get_users' })
+  async getUsers(@Payload() data: any, @Ctx() context: RedisContext) {
+    // console.log(`Channel: ${context.getChannel()}`);
+    // console.log('data in user microservice', data);
+    // console.log('I am chat controller');
   }
 }
